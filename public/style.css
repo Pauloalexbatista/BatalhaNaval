@@ -926,6 +926,89 @@ body {
   text-shadow: 0 0 8px rgba(255, 51, 102, 0.5);
 }
 
+/* Botão de Jogar vs Computador */
+.btn-ai {
+  background: linear-gradient(135deg, #00f0ff 0%, #0077aa 100%) !important;
+  color: #06090e !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
+}
+
+.btn-ai:hover {
+  background: linear-gradient(135deg, #33f5ff 0%, #0099dd 100%) !important;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.7) !important;
+}
+
+/* ================= CRONÓMETRO DE 15 SEGUNDOS ================= */
+.turn-timer-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #090e18;
+  border: 1px solid var(--bg-card-border);
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.turn-timer-box.hidden {
+  display: none !important;
+}
+
+.timer-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-icon {
+  font-size: 1.1rem;
+}
+
+.timer-count {
+  font-family: var(--font-arcade);
+  font-size: 0.95rem;
+  color: var(--neon-yellow);
+  min-width: 38px;
+}
+
+.timer-bar-track {
+  width: 80px;
+  height: 8px;
+  background: #141c2c;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.timer-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--neon-green), var(--neon-yellow));
+  border-radius: 4px;
+  transition: width 0.1s linear, background 0.3s;
+}
+
+/* Estado de urgência (3s ou menos) */
+.turn-timer-box.critical {
+  border-color: var(--neon-red);
+  box-shadow: 0 0 15px rgba(255, 51, 102, 0.6);
+  animation: timer-pulse 0.5s infinite alternate;
+}
+
+.turn-timer-box.critical .timer-count {
+  color: var(--neon-red);
+}
+
+.turn-timer-box.critical .timer-bar-fill {
+  background: var(--neon-red);
+}
+
+@keyframes timer-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+
 .salvo-indicator-box {
   display: flex;
   align-items: center;

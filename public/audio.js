@@ -17,6 +17,9 @@ class ArcadeAudio {
 
   toggleMute() {
     this.muted = !this.muted;
+    if (this.muted) {
+      this.stopSonar();
+    }
     return this.muted;
   }
 
@@ -177,6 +180,68 @@ class ArcadeAudio {
         this.playTone(freq, 'sawtooth', 0.3, 0.25);
       }, idx * 160);
     });
+  }
+
+  // Ping de Sonar Submarino Imersivo (Web Audio API)
+  sonarPing() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const now = this.ctx.currentTime;
+
+      // Oscilador Principal (Ping Puro C6 / 1046.5 Hz com ligeiro glide)
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1046.5, now);
+      osc.frequency.exponentialRampToValueAtTime(1038, now + 1.2);
+
+      // Envolvente com eco e cauda longa
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+
+      // Oscilador Secundário Harmónico Suave (2093 Hz)
+      const oscHarmonic = this.ctx.createOscillator();
+      const gainHarmonic = this.ctx.createGain();
+
+      oscHarmonic.type = 'sine';
+      oscHarmonic.frequency.setValueAtTime(2093, now);
+      oscHarmonic.frequency.exponentialRampToValueAtTime(2076, now + 0.8);
+
+      gainHarmonic.gain.setValueAtTime(0.001, now);
+      gainHarmonic.gain.linearRampToValueAtTime(0.06, now + 0.03);
+      gainHarmonic.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      oscHarmonic.connect(gainHarmonic);
+      gainHarmonic.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 1.6);
+
+      oscHarmonic.start(now);
+      oscHarmonic.stop(now + 0.8);
+    } catch (e) {}
+  }
+
+  // Temporizador Sonar de fundo contínuo
+  startSonar(intervalMs = 3800) {
+    if (this.sonarTimer) return;
+    this.sonarPing();
+    this.sonarTimer = setInterval(() => {
+      this.sonarPing();
+    }, intervalMs);
+  }
+
+  stopSonar() {
+    if (this.sonarTimer) {
+      clearInterval(this.sonarTimer);
+      this.sonarTimer = null;
+    }
   }
 }
 

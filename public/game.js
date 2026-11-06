@@ -38,7 +38,11 @@
     activeMobileTab: 'attack', // 'attack' | 'defense'
     // Histórico de hits em navios para atualizar gráficos riscados
     enemyShipsDamage: {}, // { [shipId/shipType]: count }
-    myShipsDamage: {}
+    myShipsDamage: {},
+    // Temporizador de 15s e Modo Solo
+    turnTimer: null,
+    turnSecondsLeft: 15,
+    isSinglePlayer: false
   };
 
   // Elementos do DOM
@@ -50,6 +54,7 @@
   };
 
   const elements = {
+    btnSingleplayer: document.getElementById('btn-singleplayer'),
     btnCreateGame: document.getElementById('btn-create-game'),
     btnJoinGame: document.getElementById('btn-join-game'),
     roomInput: document.getElementById('room-input'),
@@ -85,6 +90,9 @@
     defenseGrid: document.getElementById('defense-grid'),
     turnBanner: document.getElementById('turn-banner'),
     turnStatusText: document.getElementById('turn-status-text'),
+    turnTimerBox: document.getElementById('turn-timer-box'),
+    turnTimerCount: document.getElementById('turn-timer-count'),
+    turnTimerBar: document.getElementById('turn-timer-bar'),
     battleWaitingAlert: document.getElementById('battle-waiting-alert'),
     btnFireSalvo: document.getElementById('btn-fire-salvo'),
     slots: [
@@ -126,6 +134,12 @@
     Object.values(screens).forEach(scr => scr.classList.remove('active'));
     if (screens[screenKey]) {
       screens[screenKey].classList.add('active');
+    }
+    // Gerir som de sonar de fundo conforme o ecrã
+    if (screenKey === 'waiting') {
+      audio.startSonar();
+    } else if (screenKey !== 'battle') {
+      audio.stopSonar();
     }
   }
 
@@ -642,14 +656,96 @@
     }
   }
 
+  // ================= CRONÓMETRO DE 15 SEGUNDOS =================
+  function startTurnTimer() {
+    stopTurnTimer();
+    state.turnSecondsLeft = 15;
+    if (elements.turnTimerBox) {
+      elements.turnTimerBox.classList.remove('hidden', 'critical');
+    }
+    updateTurnTimerDisplay();
+
+    state.turnTimer = setInterval(() => {
+      state.turnSecondsLeft -= 1;
+      updateTurnTimerDisplay();
+
+      if (state.turnSecondsLeft <= 3 && state.turnSecondsLeft > 0) {
+        if (elements.turnTimerBox) elements.turnTimerBox.classList.add('critical');
+        audio.playTone(850, 'square', 0.06, 0.15); // Beep de urgência
+      }
+
+      if (state.turnSecondsLeft <= 0) {
+        stopTurnTimer();
+        autoSelectAndFireSalvo();
+      }
+    }, 1000);
+  }
+
+  function stopTurnTimer() {
+    if (state.turnTimer) {
+      clearInterval(state.turnTimer);
+      state.turnTimer = null;
+    }
+    if (elements.turnTimerBox) {
+      elements.turnTimerBox.classList.add('hidden');
+      elements.turnTimerBox.classList.remove('critical');
+    }
+  }
+
+  function updateTurnTimerDisplay() {
+    if (!elements.turnTimerCount || !elements.turnTimerBar) return;
+    elements.turnTimerCount.textContent = `${state.turnSecondsLeft}s`;
+    const pct = Math.max(0, (state.turnSecondsLeft / 15) * 100);
+    elements.turnTimerBar.style.width = `${pct}%`;
+  }
+
+  // Preenchimento e disparo automático caso o tempo esgote
+  function autoSelectAndFireSalvo() {
+    if (!state.isMyTurn) return;
+
+    // Recolher coordenadas disponíveis
+    while (state.shotsToFire.length < 3) {
+      const candidates = [];
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          const key = `${r},${c}`;
+          if (
+            !state.shotsFiredHistory.has(key) &&
+            !state.shotsToFire.some(t => t.row === r && t.col === c)
+          ) {
+            const cell = elements.attackGrid.querySelector(`[data-coord="${key}"]`);
+            if (cell && !cell.classList.contains('hit') && !cell.classList.contains('miss')) {
+              candidates.push({ row: r, col: c });
+            }
+          }
+        }
+      }
+
+      if (candidates.length === 0) break;
+      const pick = candidates[Math.floor(Math.random() * candidates.length)];
+      state.shotsToFire.push(pick);
+      const cell = elements.attackGrid.querySelector(`[data-coord="${pick.row},${pick.col}"]`);
+      if (cell) cell.classList.add('selected-target');
+    }
+
+    reindexTargetBadges();
+    updateSalvoIndicators();
+    fireSalvo();
+  }
+
   function updateTurnUI() {
     if (state.isMyTurn) {
+      audio.stopSonar(); // Silencia o sonar na minha vez
       elements.turnStatusText.textContent = '⚡ A TUA VEZ: Seleciona 3 coordenadas no Radar de Ataque!';
       elements.turnStatusText.className = 'turn-status-text your-turn';
       elements.battleWaitingAlert.classList.add('hidden');
       setMobileTab('attack'); // Em telemóvel abre automaticamente o ecrã de ataque!
+      startTurnTimer(); // Inicia contagem decrescente de 15s
     } else {
-      elements.turnStatusText.textContent = '⏳ VEZ DO OPONENTE: A aguardar pelos 3 tiros do adversário...';
+      stopTurnTimer(); // Para o cronómetro se não for a minha vez
+      audio.startSonar(); // Ativa o ping submarino enquanto espera pelo oponente
+      const oppLabel = state.isSinglePlayer ? 'Computador' : 'Adversário';
+      elements.turnStatusText.textContent = `⏳ VEZ DO OPONENTE: A aguardar pelos 3 tiros do ${oppLabel}...`;
       elements.turnStatusText.className = 'turn-status-text enemy-turn';
       elements.battleWaitingAlert.classList.remove('hidden'); // Mensagem destacada a aguardar pelo adversário
       setMobileTab('defense'); // Em telemóvel abre automaticamente o ecrã de defesa para ver os tiros a cair!
@@ -660,6 +756,7 @@
   function fireSalvo() {
     if (!state.isMyTurn || state.shotsToFire.length !== 3) return;
 
+    stopTurnTimer(); // Para o cronómetro logo que dispara
     elements.btnFireSalvo.disabled = true;
     audio.launch();
 
@@ -684,6 +781,9 @@
   socket.on('room_joined', (data) => {
     state.roomId = data.roomId;
     state.playerNumber = data.playerNumber;
+    if (data.isAI !== undefined) {
+      state.isSinglePlayer = !!data.isAI;
+    }
     initSetupScreen();
     showScreen('setup');
   });
@@ -692,7 +792,15 @@
     alert(msg);
   });
 
-  socket.on('start_setup', () => {
+  socket.on('start_setup', (data) => {
+    stopTurnTimer();
+    audio.stopSonar();
+    elements.modalGameOver.classList.add('hidden'); // Fecha modal de vitória/derrota na revanche!
+    elements.rematchStatus.textContent = '';
+    elements.btnRematch.disabled = false;
+    if (data && data.isAI !== undefined) {
+      state.isSinglePlayer = !!data.isAI;
+    }
     initSetupScreen();
     showScreen('setup');
   });
@@ -703,6 +811,9 @@
 
   socket.on('battle_start', (data) => {
     state.isMyTurn = data.yourTurn;
+    if (data.isAI !== undefined) {
+      state.isSinglePlayer = !!data.isAI;
+    }
     initBattleScreen();
     showScreen('battle');
   });
@@ -820,6 +931,8 @@
 
   // Fim de Jogo
   socket.on('game_over', (data) => {
+    stopTurnTimer();
+    audio.stopSonar();
     setTimeout(() => {
       const won = data.winner === state.playerNumber;
       if (won) {
@@ -827,13 +940,17 @@
         elements.gameoverIcon.textContent = '🏆';
         elements.gameoverTitle.textContent = 'VITÓRIA NAVAL!';
         elements.gameoverTitle.style.color = 'var(--neon-green)';
-        elements.gameoverDesc.textContent = 'Parabéns, Comandante! Aniquilaste toda a frota inimiga!';
+        elements.gameoverDesc.textContent = state.isSinglePlayer
+          ? 'Parabéns, Comandante! Derrotaste o Computador com precisão estratégica!'
+          : 'Parabéns, Comandante! Aniquilaste toda a frota inimiga!';
       } else {
         audio.defeat();
         elements.gameoverIcon.textContent = '☠️';
         elements.gameoverTitle.textContent = 'FROTA DESTRUÍDA!';
         elements.gameoverTitle.style.color = 'var(--neon-red)';
-        elements.gameoverDesc.textContent = 'Todos os teus navios foram afundados pelo adversário.';
+        elements.gameoverDesc.textContent = state.isSinglePlayer
+          ? 'O Computador conseguiu afundar todos os teus navios. Tenta novamente!'
+          : 'Todos os teus navios foram afundados pelo adversário.';
       }
       elements.modalGameOver.classList.remove('hidden');
     }, 2000);
@@ -849,8 +966,17 @@
   });
 
   // ================= EVENT LISTENERS DE INTERFACE =================
+  if (elements.btnSingleplayer) {
+    elements.btnSingleplayer.addEventListener('click', () => {
+      audio.click();
+      state.isSinglePlayer = true;
+      socket.emit('create_ai_game');
+    });
+  }
+
   elements.btnCreateGame.addEventListener('click', () => {
     audio.click();
+    state.isSinglePlayer = false;
     socket.emit('create_room');
   });
 
@@ -913,8 +1039,15 @@
     if (state.fleet.length !== 8) return;
     audio.click();
     elements.btnConfirmFleet.disabled = true;
-    elements.setupStatusMsg.textContent = 'Frota confirmada! A aguardar pelo adversário...';
-    elements.setupWaitingOpponent.classList.remove('hidden');
+
+    if (state.isSinglePlayer) {
+      elements.setupStatusMsg.textContent = 'Frota posicionada! A carregar batalha...';
+    } else {
+      elements.setupStatusMsg.textContent = 'Frota confirmada! A aguardar pelo adversário...';
+      elements.setupWaitingOpponent.classList.remove('hidden');
+      audio.startSonar(); // Sonar enquanto espera pelo oponente
+    }
+
     socket.emit('confirm_fleet', state.fleet);
   });
 
@@ -926,13 +1059,18 @@
   // Revanche
   elements.btnRematch.addEventListener('click', () => {
     audio.click();
-    elements.rematchStatus.textContent = 'Pedido de revanche enviado ao oponente...';
+    elements.rematchStatus.textContent = state.isSinglePlayer
+      ? 'A reiniciar simulador de combate naval...'
+      : 'Pedido de revanche enviado ao oponente...';
     elements.btnRematch.disabled = true;
     socket.emit('request_rematch');
   });
 
   elements.btnReturnLobby.addEventListener('click', () => {
     audio.click();
+    audio.stopSonar();
+    stopTurnTimer();
+    elements.modalGameOver.classList.add('hidden');
     window.location.href = '/';
   });
 

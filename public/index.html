@@ -41,9 +41,19 @@
         <p class="subtitle">Batalha estratégica para 2 jogadores com salva de 3 tiros!</p>
 
         <div class="lobby-options">
+          <!-- 1 Jogador vs Computador -->
           <div class="lobby-action-box">
-            <button id="btn-create-game" class="btn-arcade btn-primary btn-large">
-              <span class="icon">⚓</span> CRIAR NOVO JOGO
+            <button id="btn-singleplayer" class="btn-arcade btn-primary btn-large btn-ai">
+              <span class="icon">🤖</span> JOGAR VS COMPUTADOR (SOLO)
+            </button>
+            <span class="hint">Batalha rápida imediata contra a Inteligência Artificial</span>
+          </div>
+
+          <div class="divider"><span>OU ONLINE (2 JOGADORES)</span></div>
+
+          <div class="lobby-action-box">
+            <button id="btn-create-game" class="btn-arcade btn-secondary btn-large">
+              <span class="icon">⚓</span> CRIAR SALA PARA AMIGO
             </button>
             <span class="hint">Cria a sala e convida o teu amigo pelo WhatsApp</span>
           </div>
@@ -167,6 +177,17 @@
       <div class="turn-banner" id="turn-banner">
         <div class="turn-status-text" id="turn-status-text">
           PREPARANDO SISTEMAS DE FOGO...
+        </div>
+
+        <!-- Temporizador Regressivo de 15s -->
+        <div class="turn-timer-box" id="turn-timer-box">
+          <div class="timer-display">
+            <span class="timer-icon">⏱️</span>
+            <span id="turn-timer-count" class="timer-count">15s</span>
+          </div>
+          <div class="timer-bar-track">
+            <div id="turn-timer-bar" class="timer-bar-fill"></div>
+          </div>
         </div>
         
         <!-- Indicador dos 3 Tiros da Salva -->
