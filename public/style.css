@@ -1,0 +1,1333 @@
+/* ============================================================
+   BATALHA NAVAL ARCADE - CSS ESTILIZADO ARCADE NEON
+   ============================================================ */
+
+:root {
+  --bg-deep: #0a0d14;
+  --bg-card: #101622;
+  --bg-card-border: #1d2a44;
+  --radar-cyan: #00f0ff;
+  --radar-cyan-dim: rgba(0, 240, 255, 0.2);
+  --neon-green: #00ff66;
+  --neon-red: #ff3366;
+  --neon-yellow: #ffcc00;
+  --neon-blue: #0088ff;
+  --text-main: #e2e8f0;
+  --text-muted: #8492a6;
+  --cell-size: 32px;
+  --font-arcade: 'Press Start 2P', monospace;
+  --font-body: 'Rajdhani', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-deep);
+  background-image: 
+    radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.08) 0%, transparent 60%),
+    linear-gradient(rgba(10, 13, 20, 0.95), rgba(10, 13, 20, 0.98));
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 16px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.text-neon-cyan {
+  color: var(--radar-cyan) !important;
+}
+
+/* Linhas CRT / Scanlines */
+.arcade-scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.12),
+    rgba(0, 0, 0, 0.12) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* ================= POPUP ALERTA FLUTUANTE DE COMBATE ================= */
+.combat-banner-popup {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  pointer-events: none;
+  animation: bannerBounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.combat-banner-popup.hidden {
+  display: none;
+}
+
+.banner-content {
+  background: rgba(14, 2, 8, 0.95);
+  border: 3px solid var(--neon-red);
+  box-shadow: 0 0 35px rgba(255, 51, 102, 0.8), inset 0 0 15px rgba(255, 51, 102, 0.4);
+  padding: 16px 28px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.banner-icon {
+  font-size: 2.2rem;
+  animation: pulse-fire 0.8s infinite;
+}
+
+.banner-text {
+  font-family: var(--font-arcade);
+  font-size: 1.15rem;
+  color: #fff;
+  text-shadow: 0 0 12px var(--neon-red);
+  letter-spacing: 2px;
+}
+
+@keyframes bannerBounceIn {
+  0% { opacity: 0; transform: translate(-50%, -40px) scale(0.7); }
+  70% { transform: translate(-50%, 8px) scale(1.05); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+/* ================= BANNER GIGANTE DE ESPERA ================= */
+.waiting-turn-alert {
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid var(--neon-yellow);
+  box-shadow: 0 0 20px rgba(255, 204, 0, 0.35);
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+.waiting-turn-alert.hidden {
+  display: none;
+}
+
+.mini-sonar {
+  width: 28px;
+  height: 28px;
+  border: 3px solid transparent;
+  border-top-color: var(--neon-yellow);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
+  flex-shrink: 0;
+}
+
+.waiting-alert-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.waiting-alert-texts strong {
+  font-family: var(--font-arcade);
+  font-size: 0.85rem;
+  color: var(--neon-yellow);
+  letter-spacing: 1px;
+}
+
+.waiting-alert-texts span {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* ================= HEADER ================= */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: rgba(16, 22, 34, 0.85);
+  border-bottom: 2px solid var(--radar-cyan-dim);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.radar-ping {
+  width: 14px;
+  height: 14px;
+  background-color: var(--neon-green);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--neon-green);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 16px var(--neon-green); }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+.game-title {
+  font-family: var(--font-arcade);
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 0 8px var(--radar-cyan);
+}
+
+.neon-red {
+  color: var(--neon-red);
+  text-shadow: 0 0 8px var(--neon-red);
+}
+
+.arcade-badge {
+  font-size: 0.55rem;
+  background: var(--neon-yellow);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+  font-weight: 900;
+}
+
+.btn-icon {
+  background: #192234;
+  border: 1px solid var(--radar-cyan);
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: var(--radar-cyan);
+  color: #000;
+  box-shadow: 0 0 10px var(--radar-cyan);
+}
+
+/* ================= MAIN CONTAINER ================= */
+.main-container {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= TELAS ================= */
+.screen {
+  display: none;
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.screen.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================= CARD ARCADE ================= */
+.card-arcade {
+  background: var(--bg-card);
+  border: 2px solid var(--bg-card-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 240, 255, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+}
+
+.section-title {
+  font-family: var(--font-arcade);
+  font-size: 1.2rem;
+  color: var(--radar-cyan);
+  text-shadow: 0 0 10px var(--radar-cyan-dim);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  margin-bottom: 24px;
+}
+
+/* ================= BOTÕES ================= */
+.btn-arcade {
+  font-family: var(--font-body);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-arcade:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn-arcade:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.8);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #00f0ff 0%, #0099cc 100%);
+  color: #000;
+  box-shadow: 0 4px 14px rgba(0, 240, 255, 0.4);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(0, 240, 255, 0.7);
+  filter: brightness(1.1);
+}
+
+.btn-secondary {
+  background: #1c273c;
+  color: var(--radar-cyan);
+  border: 1px solid var(--radar-cyan);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--radar-cyan);
+  color: #000;
+}
+
+.btn-whatsapp {
+  background: linear-gradient(180deg, #25d366 0%, #128c7e 100%);
+  color: #fff;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+}
+
+.btn-whatsapp:hover {
+  box-shadow: 0 6px 22px rgba(37, 211, 102, 0.7);
+  filter: brightness(1.1);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--text-muted);
+}
+
+.btn-outline:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
+.btn-danger {
+  background: #3b1422;
+  color: var(--neon-red);
+  border: 1px solid var(--neon-red);
+}
+
+.btn-danger:hover {
+  background: var(--neon-red);
+  color: #fff;
+}
+
+.btn-large {
+  padding: 14px 26px;
+  font-size: 1.15rem;
+  width: 100%;
+}
+
+.btn-fire {
+  background: linear-gradient(180deg, #ff3366 0%, #cc0033 100%);
+  color: #fff;
+  font-family: var(--font-arcade);
+  font-size: 0.85rem;
+  padding: 12px 22px;
+  box-shadow: 0 0 15px rgba(255, 51, 102, 0.6);
+  animation: pulse-fire 2s infinite;
+}
+
+@keyframes pulse-fire {
+  0% { box-shadow: 0 0 10px rgba(255, 51, 102, 0.5); }
+  50% { box-shadow: 0 0 25px rgba(255, 51, 102, 0.9); }
+  100% { box-shadow: 0 0 10px rgba(255, 51, 102, 0.5); }
+}
+
+/* ================= 1. LOBBY ================= */
+.lobby-card {
+  max-width: 540px;
+  margin: 30px auto;
+}
+
+.lobby-options {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.lobby-action-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-family: var(--font-arcade);
+  font-size: 0.75rem;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--bg-card-border);
+}
+
+.divider span {
+  padding: 0 12px;
+}
+
+.lobby-join-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.input-group input {
+  flex: 1;
+  background: #090d16;
+  border: 2px solid var(--bg-card-border);
+  border-radius: 8px;
+  color: var(--radar-cyan);
+  font-family: var(--font-arcade);
+  font-size: 1.1rem;
+  padding: 10px 14px;
+  text-align: center;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-group input:focus {
+  border-color: var(--radar-cyan);
+  box-shadow: 0 0 10px var(--radar-cyan-dim);
+}
+
+.rules-summary {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--bg-card-border);
+  font-size: 0.9rem;
+}
+
+.rules-summary h4 {
+  font-family: var(--font-arcade);
+  font-size: 0.75rem;
+  color: var(--neon-yellow);
+  margin-bottom: 10px;
+}
+
+.rules-summary ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.rules-summary li strong {
+  color: #fff;
+}
+
+/* ================= 2. SALA DE ESPERA ================= */
+.waiting-card {
+  max-width: 500px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.sonar-spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid transparent;
+  border-top-color: var(--radar-cyan);
+  border-radius: 50%;
+  margin: 0 auto 16px auto;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 15px var(--radar-cyan-dim);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.room-code-display {
+  background: #090d16;
+  border: 2px solid var(--radar-cyan);
+  padding: 14px;
+  border-radius: 10px;
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 0 20px var(--radar-cyan-dim);
+}
+
+.code-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+}
+
+.code-value {
+  font-family: var(--font-arcade);
+  font-size: 1.8rem;
+  letter-spacing: 8px;
+  color: var(--radar-cyan);
+}
+
+.waiting-text {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  font-size: 1.05rem;
+}
+
+.share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.copy-feedback {
+  margin-top: 12px;
+  color: var(--neon-green);
+  font-weight: 700;
+  animation: fadeIn 0.3s;
+}
+
+.copy-feedback.hidden {
+  display: none;
+}
+
+/* ================= 3. MONTAGEM DA FROTA (SETUP) ================= */
+.setup-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.setup-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--bg-card);
+  padding: 16px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--bg-card-border);
+}
+
+.setup-instructions h2 {
+  font-family: var(--font-arcade);
+  font-size: 1rem;
+  color: var(--radar-cyan);
+  margin-bottom: 4px;
+}
+
+.setup-instructions p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.setup-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.setup-workspace {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Doca de Navios */
+.ships-dock {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  border-radius: 12px;
+  padding: 18px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ships-dock h3 {
+  font-family: var(--font-arcade);
+  font-size: 0.85rem;
+  color: var(--neon-green);
+  border-bottom: 1px solid var(--bg-card-border);
+  padding-bottom: 8px;
+}
+
+.ships-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ship-item {
+  background: #141c2c;
+  border: 1px solid #243452;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ship-item:hover {
+  background: #1a253b;
+  border-color: var(--radar-cyan);
+}
+
+.ship-item.selected {
+  border-color: var(--radar-cyan);
+  background: rgba(0, 240, 255, 0.15);
+  box-shadow: 0 0 10px var(--radar-cyan-dim);
+}
+
+.ship-item.placed {
+  opacity: 0.5;
+  background: #0d121c;
+  border-color: #1a2233;
+}
+
+.ship-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ship-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.ship-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ship-preview-blocks {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.preview-block {
+  width: 14px;
+  height: 14px;
+  background: var(--radar-cyan);
+  border-radius: 2px;
+  box-shadow: 0 0 4px var(--radar-cyan-dim);
+}
+
+.status-msg {
+  font-size: 0.85rem;
+  color: var(--neon-yellow);
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ================= AS GRELHAS NAVAIS ================= */
+.grid-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.grid-legend {
+  font-family: var(--font-arcade);
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+}
+
+.legend-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: #131a29;
+  border: 1px solid var(--bg-card-border);
+}
+
+.legend-badge.my-fleet {
+  color: var(--radar-cyan);
+  border-color: var(--radar-cyan-dim);
+}
+
+.naval-grid {
+  display: grid;
+  grid-template-columns: 28px repeat(10, var(--cell-size));
+  grid-template-rows: 28px repeat(10, var(--cell-size));
+  gap: 2px;
+  background: #090d15;
+  padding: 8px;
+  border-radius: 10px;
+  border: 2px solid var(--bg-card-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+
+/* Rótulos A-J e 1-10 */
+.grid-header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-arcade);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Células da Grelha */
+.grid-cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  background: #111827;
+  border: 1px solid #1f293d;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.grid-cell:hover:not(.hit):not(.miss) {
+  border-color: var(--radar-cyan);
+  background: #172338;
+}
+
+/* Célula ocupada pelo meu navio (no Setup e na Defesa) */
+.grid-cell.ship-cell {
+  background: linear-gradient(135deg, #1b3d54 0%, #0d2334 100%);
+  border: 1px solid var(--radar-cyan);
+  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.3);
+}
+
+.grid-cell.ship-cell::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--radar-cyan);
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+/* Célula em Preview de Posicionamento */
+.grid-cell.preview-valid {
+  background: rgba(0, 255, 102, 0.4) !important;
+  border-color: var(--neon-green) !important;
+}
+
+.grid-cell.preview-invalid {
+  background: rgba(255, 51, 102, 0.4) !important;
+  border-color: var(--neon-red) !important;
+}
+
+/* Célula com ÁGUA (Miss) */
+.grid-cell.miss {
+  background: #091929;
+  border-color: #17385c;
+  cursor: default;
+}
+
+.grid-cell.miss::after {
+  content: '🌊';
+  font-size: 0.9rem;
+  opacity: 0.7;
+  filter: hue-rotate(180deg);
+}
+
+/* Célula com TIRO NO NAVIO (Hit) */
+.grid-cell.hit {
+  background: linear-gradient(135deg, #660e22 0%, #360711 100%);
+  border: 1px solid var(--neon-red);
+  box-shadow: 0 0 8px rgba(255, 51, 102, 0.6);
+  cursor: default;
+  animation: hit-pulse 2s infinite;
+}
+
+.grid-cell.hit::after {
+  content: '💥';
+  font-size: 1rem;
+}
+
+@keyframes hit-pulse {
+  0% { box-shadow: 0 0 6px rgba(255, 51, 102, 0.5); }
+  50% { box-shadow: 0 0 14px rgba(255, 51, 102, 0.9); }
+  100% { box-shadow: 0 0 6px rgba(255, 51, 102, 0.5); }
+}
+
+/* Célula de Navio Afundado */
+.grid-cell.sunk {
+  background: #4a0011 !important;
+  border: 1px solid #ffcc00 !important;
+}
+
+.grid-cell.sunk::after {
+  content: '☠️';
+  font-size: 1.05rem;
+}
+
+/* Células selecionadas para a Salva de 3 tiros */
+.grid-cell.selected-target {
+  background: rgba(255, 204, 0, 0.3) !important;
+  border: 2px solid var(--neon-yellow) !important;
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.6);
+  animation: target-pulse 1s infinite alternate;
+}
+
+.grid-cell.selected-target .target-num {
+  font-family: var(--font-arcade);
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--neon-yellow);
+}
+
+@keyframes target-pulse {
+  from { transform: scale(0.96); }
+  to { transform: scale(1.04); }
+}
+
+/* ================= 4. TELA DE COMBATE (BATALHA) ================= */
+.mobile-tabs {
+  display: none;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.tab-btn {
+  flex: 1;
+  background: #101622;
+  border: 1px solid var(--bg-card-border);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tab-btn.active {
+  background: #17243b;
+  color: var(--radar-cyan);
+  border-color: var(--radar-cyan);
+  box-shadow: 0 0 12px var(--radar-cyan-dim);
+}
+
+/* Banner de Turno */
+.turn-banner {
+  background: var(--bg-card);
+  border: 2px solid var(--bg-card-border);
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.turn-status-text {
+  font-family: var(--font-arcade);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  letter-spacing: 1px;
+}
+
+.turn-status-text.your-turn {
+  color: var(--neon-green);
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
+}
+
+.turn-status-text.enemy-turn {
+  color: var(--neon-red);
+  text-shadow: 0 0 8px rgba(255, 51, 102, 0.5);
+}
+
+.salvo-indicator-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.salvo-label {
+  font-family: var(--font-arcade);
+  font-size: 0.75rem;
+  color: var(--neon-yellow);
+}
+
+.missile-slots {
+  display: flex;
+  gap: 8px;
+}
+
+.missile-slot {
+  width: 50px;
+  height: 34px;
+  background: #090e17;
+  border: 1px solid #233149;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-arcade);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.missile-slot.armed {
+  border-color: var(--neon-yellow);
+  color: #fff;
+  background: #232209;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+}
+
+.missile-slot.armed .m-icon {
+  animation: bounce 0.6s infinite alternate;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-3px); }
+}
+
+/* Arenas de Batalha (Lado a Lado em Desktop, Uma de cada vez em Mobile) */
+.battle-arenas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.arena-card {
+  background: var(--bg-card);
+  border: 2px solid var(--bg-card-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 340px;
+  max-width: 470px;
+}
+
+.arena-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--bg-card-border);
+  padding-bottom: 8px;
+}
+
+.arena-header h3 {
+  font-family: var(--font-arcade);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+.arena-attack .arena-header h3 {
+  color: var(--neon-red);
+}
+
+.arena-defense .arena-header h3 {
+  color: var(--radar-cyan);
+}
+
+.arena-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.fleet-status-bar {
+  width: 100%;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.fleet-status-bar strong {
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+/* ================= GRÁFICO DOS NAVIOS RISCADOS ================= */
+.fleet-checklist-card {
+  width: 100%;
+  background: #090e18;
+  border: 1px solid var(--bg-card-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 4px;
+}
+
+.checklist-title {
+  font-family: var(--font-arcade);
+  font-size: 0.65rem;
+  color: var(--radar-cyan);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.fleet-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.checklist-ship-item {
+  background: #121a29;
+  border: 1px solid #1f2c42;
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.checklist-ship-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.checklist-blocks {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.chk-block {
+  width: 11px;
+  height: 11px;
+  background: var(--radar-cyan);
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.chk-block.hit {
+  background: var(--neon-red);
+  box-shadow: 0 0 6px var(--neon-red);
+}
+
+/* NAVIO RISCADO AO FUNDO (Efeito Caneta Vermelha / Strikethrough) */
+.checklist-ship-item.sunk {
+  background: rgba(40, 5, 12, 0.85);
+  border-color: var(--neon-red);
+  opacity: 0.85;
+}
+
+.checklist-ship-item.sunk::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -5%;
+  width: 110%;
+  height: 3px;
+  background: var(--neon-red);
+  box-shadow: 0 0 8px var(--neon-red);
+  transform: rotate(-7deg);
+  z-index: 5;
+}
+
+.checklist-ship-item.sunk .checklist-ship-header {
+  text-decoration: line-through;
+  color: var(--neon-red);
+}
+
+.checklist-ship-item.sunk .sunk-stamp {
+  position: absolute;
+  right: 6px;
+  top: 10px;
+  background: var(--neon-red);
+  color: #fff;
+  font-family: var(--font-arcade);
+  font-size: 0.5rem;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transform: rotate(8deg);
+  box-shadow: 0 0 6px var(--neon-red);
+  z-index: 6;
+  animation: pulse-fire 1.5s infinite;
+}
+
+/* Telemetria / Log de Combate */
+.battle-log-container {
+  background: #090e18;
+  border: 1px solid var(--bg-card-border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.log-header {
+  font-family: var(--font-arcade);
+  font-size: 0.7rem;
+  color: var(--radar-cyan);
+  margin-bottom: 6px;
+}
+
+.battle-log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.battle-log p {
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.battle-log .log-hit {
+  color: var(--neon-red);
+  font-weight: 700;
+}
+
+.battle-log .log-sunk {
+  color: var(--neon-yellow);
+  font-weight: 900;
+}
+
+.battle-log .log-miss {
+  color: var(--neon-blue);
+}
+
+/* ================= 5. MODAL FIM DE JOGO ================= */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-backdrop.hidden {
+  display: none;
+}
+
+.modal-card {
+  background: var(--bg-card);
+  border: 2px solid var(--radar-cyan);
+  box-shadow: 0 0 30px var(--radar-cyan-dim);
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  max-width: 440px;
+  width: 100%;
+}
+
+.gameover-icon {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+}
+
+.gameover-title {
+  font-family: var(--font-arcade);
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+}
+
+.gameover-desc {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  margin-bottom: 24px;
+}
+
+.gameover-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rematch-status {
+  margin-top: 14px;
+  color: var(--neon-yellow);
+  font-size: 0.9rem;
+}
+
+/* ================= FOOTER ================= */
+.game-footer {
+  text-align: center;
+  padding: 12px;
+  font-family: var(--font-arcade);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--bg-card-border);
+  margin-top: auto;
+}
+
+/* ================= RESPONSIVIDADE MOBILE (ECRÃS UM DE CADA VEZ) ================= */
+@media (max-width: 768px) {
+  :root {
+    --cell-size: 28px;
+  }
+
+  .naval-grid {
+    grid-template-columns: 22px repeat(10, var(--cell-size));
+    grid-template-rows: 22px repeat(10, var(--cell-size));
+    gap: 1.5px;
+    padding: 6px;
+  }
+
+  .grid-header-cell {
+    font-size: 0.65rem;
+  }
+
+  /* No telemóvel as abas ficam sempre visíveis no topo do combate */
+  .mobile-tabs {
+    display: flex;
+  }
+
+  /* Exibe estritamente UM ecrã de cada vez no telemóvel */
+  .battle-arenas {
+    display: block;
+    width: 100%;
+  }
+
+  .arena-card {
+    min-width: 100%;
+    max-width: 100%;
+    display: none; /* Escondido por defeito */
+  }
+
+  /* Apenas a arena ativa é visível */
+  .arena-card.mobile-active {
+    display: flex !important;
+    animation: fadeIn 0.25s ease;
+  }
+
+  .turn-banner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    padding: 12px;
+  }
+
+  .salvo-indicator-box {
+    justify-content: center;
+  }
+
+  .setup-workspace {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ships-dock {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .banner-content {
+    padding: 12px 18px;
+  }
+
+  .banner-text {
+    font-size: 0.95rem;
+  }
+}

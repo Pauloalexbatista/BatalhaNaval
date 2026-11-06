@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Batalha Naval Arcade - 2 Jogadores</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="arcade-scanlines"></div>
+
+  <!-- Alerta Flutuante de Combate (Ex: TIRO NO PORTA-AVIÕES! / PORTA-AVIÕES AO FUNDO!) -->
+  <div id="combat-banner-popup" class="combat-banner-popup hidden">
+    <div class="banner-content">
+      <span id="banner-icon" class="banner-icon">💥</span>
+      <h2 id="banner-text" class="banner-text">PORTA-AVIÕES AO FUNDO!</h2>
+    </div>
+  </div>
+
+  <!-- Cabeçalho Principal -->
+  <header class="game-header">
+    <div class="logo-container">
+      <span class="radar-ping"></span>
+      <h1 class="game-title">NAVY<span class="neon-red">STRIKE</span> <span class="arcade-badge">ARCADE</span></h1>
+    </div>
+    <div class="header-actions">
+      <button id="btn-sound-toggle" class="btn-icon" title="Ativar/Desativar Som">🔊</button>
+    </div>
+  </header>
+
+  <!-- Container Principal das Telas -->
+  <main class="main-container">
+
+    <!-- 1. TELA: LOBBY / ENTRAR -->
+    <section id="screen-lobby" class="screen active">
+      <div class="card-arcade lobby-card">
+        <h2 class="section-title">COMBATE NAVAL ONLINE</h2>
+        <p class="subtitle">Batalha estratégica para 2 jogadores com salva de 3 tiros!</p>
+
+        <div class="lobby-options">
+          <div class="lobby-action-box">
+            <button id="btn-create-game" class="btn-arcade btn-primary btn-large">
+              <span class="icon">⚓</span> CRIAR NOVO JOGO
+            </button>
+            <span class="hint">Cria a sala e convida o teu amigo pelo WhatsApp</span>
+          </div>
+
+          <div class="divider"><span>OU</span></div>
+
+          <div class="lobby-join-box">
+            <label for="room-input">Código da Sala:</label>
+            <div class="input-group">
+              <input type="text" id="room-input" placeholder="Ex: A9X2Y" maxlength="6" autocomplete="off" autocorrect="off" autocapitalize="characters">
+              <button id="btn-join-game" class="btn-arcade btn-secondary">ENTRAR</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="rules-summary">
+          <h4>📌 REGRAS BÁSICAS ARCADE</h4>
+          <ul>
+            <li>🎯 <strong>Salva de 3 Tiros:</strong> A cada turno disparas 3 tiros seguidos!</li>
+            <li>🚫 <strong>Sem Navios Colados:</strong> Não podes colar barcos (nem na diagonal).</li>
+            <li>🌊 <strong>Área Livre:</strong> Quando um navio afunda, a área em redor é revelada como água.</li>
+            <li>🔄 <strong>Rodar Barco:</strong> Clica com botão direito do rato ou prime R para rodar antes de fixar!</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. TELA: SALA DE ESPERA (CONVITE WHATSAPP) -->
+    <section id="screen-waiting" class="screen">
+      <div class="card-arcade waiting-card">
+        <div class="sonar-spinner"></div>
+        <h2 class="section-title">SALA DE OPERAÇÕES CRIADA</h2>
+        
+        <div class="room-code-display">
+          <span class="code-label">CÓDIGO DA SALA:</span>
+          <span id="display-room-code" class="code-value">------</span>
+        </div>
+
+        <p class="waiting-text">Aguardando oponente conectar-se à sala...</p>
+
+        <!-- Botões de Partilha WhatsApp -->
+        <div class="share-actions">
+          <button id="btn-share-whatsapp" class="btn-arcade btn-whatsapp btn-large">
+            <span class="icon">💬</span> CONVIDAR NO WHATSAPP
+          </button>
+          <button id="btn-copy-link" class="btn-arcade btn-outline">
+            📋 Copiar Link de Convite
+          </button>
+        </div>
+
+        <div id="copy-feedback" class="copy-feedback hidden">Link copiado para a área de transferência!</div>
+      </div>
+    </section>
+
+    <!-- 3. TELA: MONTAGEM DA FROTA (SETUP) -->
+    <section id="screen-setup" class="screen">
+      <div class="setup-wrapper">
+        <div class="setup-header">
+          <div class="setup-instructions">
+            <h2>POSICIONAMENTO DA FROTA</h2>
+            <p>Coloca os teus 8 navios (A-J / 1-10). <strong class="text-neon-cyan">Dica: Clica com botão direito do rato ou tecla [R] para rodar!</strong></p>
+          </div>
+          <div class="setup-controls">
+            <button id="btn-rotate-ship" class="btn-arcade btn-secondary">
+              🔄 RODAR (<span id="rotation-display">HORIZONTAL</span>)
+            </button>
+            <button id="btn-auto-place" class="btn-arcade btn-outline">
+              🎲 ALEATÓRIO
+            </button>
+            <button id="btn-clear-fleet" class="btn-arcade btn-danger">
+              🧹 LIMPAR
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner de espera na montagem da frota (quando já confirme e aguardo adversário) -->
+        <div id="setup-waiting-opponent" class="waiting-turn-alert hidden">
+          <div class="mini-sonar"></div>
+          <div class="waiting-alert-texts">
+            <strong>A AGUARDAR PELO ADVERSÁRIO...</strong>
+            <span>O teu oponente ainda está a posicionar a sua frota na grelha.</span>
+          </div>
+        </div>
+
+        <div class="setup-workspace">
+          <!-- Grelha de Posicionamento -->
+          <div class="grid-container">
+            <div class="grid-legend">
+              <span class="legend-badge my-fleet">🛡️ GRELHA DE DEFESA (Clica com botão direito para rodar)</span>
+            </div>
+            <div id="setup-grid" class="naval-grid"></div>
+          </div>
+
+          <!-- Doca de Navios -->
+          <div class="ships-dock">
+            <h3>FROTA DISPONÍVEL (<span id="placed-count">0</span>/8)</h3>
+            <div id="ships-list" class="ships-list">
+              <!-- Renderizado via game.js -->
+            </div>
+
+            <div class="setup-confirm-box">
+              <button id="btn-confirm-fleet" class="btn-arcade btn-primary btn-large" disabled>
+                ⚓ PRONTO PARA A BATALHA!
+              </button>
+              <div id="setup-status-msg" class="status-msg">Posiciona todos os 8 navios para avançar.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. TELA: COMBATE NAVAL (BATALHA) -->
+    <section id="screen-battle" class="screen">
+      <!-- Abas para Mobile -->
+      <div class="mobile-tabs">
+        <button id="tab-attack" class="tab-btn active">🎯 RADAR DE ATAQUE</button>
+        <button id="tab-defense" class="tab-btn">🛡️ MINHA DEFESA</button>
+      </div>
+
+      <!-- Banner de Estado do Turno -->
+      <div class="turn-banner" id="turn-banner">
+        <div class="turn-status-text" id="turn-status-text">
+          PREPARANDO SISTEMAS DE FOGO...
+        </div>
+        
+        <!-- Indicador dos 3 Tiros da Salva -->
+        <div class="salvo-indicator-box" id="salvo-indicator-box">
+          <span class="salvo-label">SALVA (3 TIROS):</span>
+          <div class="missile-slots">
+            <div class="missile-slot" id="slot-0"><span class="m-icon">🚀</span> T1</div>
+            <div class="missile-slot" id="slot-1"><span class="m-icon">🚀</span> T2</div>
+            <div class="missile-slot" id="slot-2"><span class="m-icon">🚀</span> T3</div>
+          </div>
+          <button id="btn-fire-salvo" class="btn-arcade btn-fire" disabled>
+            🔥 DISPARAR SALVA!
+          </button>
+        </div>
+      </div>
+
+      <!-- Banner Gigante de Espera pelo Adversário durante o Jogo -->
+      <div id="battle-waiting-alert" class="waiting-turn-alert hidden">
+        <div class="mini-sonar"></div>
+        <div class="waiting-alert-texts">
+          <strong>A AGUARDAR PELO ADVERSÁRIO...</strong>
+          <span>O oponente está a calibrar os seus 3 tiros no radar. Fica atento à tua defesa!</span>
+        </div>
+      </div>
+
+      <!-- Ecrãs de Combate (Lado a Lado em Desktop, Abas em Mobile) -->
+      <div class="battle-arenas">
+        
+        <!-- ECRÃ DE ATAQUE (ONDE O JOGADOR ATACA O INIMIGO) -->
+        <div class="arena-card arena-attack" id="arena-attack">
+          <div class="arena-header">
+            <h3>🎯 RADAR DE ATAQUE (Grelha Inimiga)</h3>
+            <span class="arena-tag">MARCA 3 TIROS AQUI</span>
+          </div>
+          <div class="grid-container">
+            <div id="attack-grid" class="naval-grid"></div>
+          </div>
+          <div class="fleet-status-bar">
+            <span>Navios Inimigos Restantes: <strong id="enemy-ships-left">8</strong>/8</span>
+          </div>
+
+          <!-- GRÁFICO DOS NAVIOS INIMIGOS (COM RISCO VERMELHO AO AFUNDAR) -->
+          <div class="fleet-checklist-card">
+            <div class="checklist-title">FROTA INIMIGA (REGISTO DE DANOS)</div>
+            <div id="enemy-fleet-checklist" class="fleet-checklist">
+              <!-- Gerado via game.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ECRÃ DE DEFESA (MEUS NAVIOS E TIROS DO OPONENTE) -->
+        <div class="arena-card arena-defense" id="arena-defense">
+          <div class="arena-header">
+            <h3>🛡️ MINHA DEFESA (Meus Navios)</h3>
+            <span class="arena-tag">TIROS RECEBIDOS</span>
+          </div>
+          <div class="grid-container">
+            <div id="defense-grid" class="naval-grid"></div>
+          </div>
+          <div class="fleet-status-bar">
+            <span>Meus Navios Intactos: <strong id="my-ships-left">8</strong>/8</span>
+          </div>
+
+          <!-- GRÁFICO DOS MEUS NAVIOS (COM RISCO VERMELHO AO AFUNDAR) -->
+          <div class="fleet-checklist-card">
+            <div class="checklist-title">MINHA FROTA (INTEGRIDADE)</div>
+            <div id="my-fleet-checklist" class="fleet-checklist">
+              <!-- Gerado via game.js -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Log de Batalha Estilo Radar -->
+      <div class="battle-log-container">
+        <div class="log-header">📜 TELEMETRIA DE COMBATE</div>
+        <div id="battle-log" class="battle-log"></div>
+      </div>
+    </section>
+
+    <!-- 5. MODAL: FIM DE JOGO -->
+    <div id="modal-gameover" class="modal-backdrop hidden">
+      <div class="modal-card arcade-glow">
+        <div id="gameover-icon" class="gameover-icon">🏆</div>
+        <h2 id="gameover-title" class="gameover-title">VITÓRIA!</h2>
+        <p id="gameover-desc" class="gameover-desc">Destruíste toda a frota inimiga com precisão cirúrgica!</p>
+
+        <div class="gameover-actions">
+          <button id="btn-rematch" class="btn-arcade btn-primary btn-large">
+            🔄 JOGAR NOVAMENTE (REVANCHE)
+          </button>
+          <button id="btn-return-lobby" class="btn-arcade btn-outline">
+            🏠 Voltar ao Menu
+          </button>
+        </div>
+        <div id="rematch-status" class="rematch-status"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Rodapé ArcadeHub -->
+  <footer class="game-footer">
+    <span>ARCADEHUB • BATALHA NAVAL ARCADE EDITION</span>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
