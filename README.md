@@ -57,3 +57,54 @@ Duplo clique em `iniciar_jogo.bat`. Abre logo no browser em `http://localhost:30
 ```bash
 npm start
 ```
+
+---
+
+## 🌐 Instalação no VPS (`naval.testeweb.site` - IP: 187.124.32.121)
+
+### 1. Clonar no VPS
+```bash
+cd /var/www
+git clone https://github.com/Pauloalexbatista/BatalhaNaval.git naval
+cd naval
+npm install --production
+```
+
+### 2. Iniciar com PM2 (Porta 3005)
+```bash
+pm2 start ecosystem.config.cjs
+pm2 save
+```
+
+### 3. Configurar Nginx para `naval.testeweb.site`
+Crie ou adicione em `/etc/nginx/sites-available/naval`:
+```nginx
+server {
+    listen 80;
+    server_name naval.testeweb.site;
+
+    location / {
+        proxy_pass http://127.0.0.1:3005;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Ative o site e reinicie o Nginx:
+```bash
+ln -s /etc/nginx/sites-available/naval /etc/nginx/sites-enabled/
+nginx -t
+systemctl reload nginx
+```
+
+### 4. Ativar SSL / HTTPS com Certbot
+```bash
+certbot --nginx -d naval.testeweb.site
+```
