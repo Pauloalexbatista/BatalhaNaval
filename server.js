@@ -301,11 +301,11 @@ function processSalvo(room, shooterNum, targets) {
       io.to(defender.socketId).emit('turn_change', { yourTurn: true, currentTurn: defenderNum });
     }
 
-    // Se o próximo jogador for a IA, agendar o disparo após pequeno delay realista
+    // Se o próximo jogador for a IA, aguardar 7s para o jogador ver os seus tiros e mudar de quadro
     if (room.isAI && room.currentTurn === 2) {
       setTimeout(() => {
         executeAITurn(room);
-      }, 1600);
+      }, 7000);
     }
   }
 }

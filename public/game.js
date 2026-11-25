@@ -42,7 +42,10 @@
     // Temporizador de 15s e Modo Solo
     turnTimer: null,
     turnSecondsLeft: 15,
-    isSinglePlayer: false
+    isSinglePlayer: false,
+    // Transições de quadros com 5s de observação
+    isTransitioning: false,
+    pendingTurnChange: null
   };
 
   // Elementos do DOM
@@ -656,6 +659,42 @@
     }
   }
 
+  // ================= TRANSIÇÕES DE QUADROS (5 SEGUNDOS DE OBSERVAÇÃO) =================
+  let transitionTimer = null;
+  function clearTransitionCountdown() {
+    if (transitionTimer) {
+      clearInterval(transitionTimer);
+      transitionTimer = null;
+    }
+    state.isTransitioning = false;
+  }
+
+  function startTransitionCountdown(seconds, targetTab, message, onComplete) {
+    clearTransitionCountdown();
+    state.isTransitioning = true;
+    let left = seconds;
+
+    elements.turnStatusText.innerHTML = `${message} <span class="trans-countdown-badge">${left}s</span>`;
+    elements.turnStatusText.className = 'turn-status-text transition-turn';
+
+    transitionTimer = setInterval(() => {
+      left -= 1;
+      if (left > 0) {
+        elements.turnStatusText.innerHTML = `${message} <span class="trans-countdown-badge">${left}s</span>`;
+      } else {
+        clearInterval(transitionTimer);
+        transitionTimer = null;
+        state.isTransitioning = false;
+        if (targetTab) {
+          setMobileTab(targetTab);
+        }
+        if (onComplete) {
+          onComplete();
+        }
+      }
+    }, 1000);
+  }
+
   // ================= CRONÓMETRO DE 15 SEGUNDOS =================
   function startTurnTimer() {
     stopTurnTimer();
@@ -756,7 +795,9 @@
   function fireSalvo() {
     if (!state.isMyTurn || state.shotsToFire.length !== 3) return;
 
+    clearTransitionCountdown();
     stopTurnTimer(); // Para o cronómetro logo que dispara
+    state.isMyTurn = false; // Impede duplo clique antes da resposta
     elements.btnFireSalvo.disabled = true;
     audio.launch();
 
@@ -793,6 +834,7 @@
   });
 
   socket.on('start_setup', (data) => {
+    clearTransitionCountdown();
     stopTurnTimer();
     audio.stopSonar();
     elements.modalGameOver.classList.add('hidden'); // Fecha modal de vitória/derrota na revanche!
@@ -810,6 +852,7 @@
   });
 
   socket.on('battle_start', (data) => {
+    clearTransitionCountdown();
     state.isMyTurn = data.yourTurn;
     if (data.isAI !== undefined) {
       state.isSinglePlayer = !!data.isAI;
@@ -819,9 +862,14 @@
   });
 
   socket.on('turn_change', (data) => {
-    state.isMyTurn = data.yourTurn;
     state.shotsToFire = [];
-    updateTurnUI();
+    if (state.isTransitioning) {
+      // Se estamos nos 5 segundos de observação do quadro, guarda o estado para aplicar no fim
+      state.pendingTurnChange = data.yourTurn;
+    } else {
+      state.isMyTurn = data.yourTurn;
+      updateTurnUI();
+    }
   });
 
   // Resultados dos 3 tiros
@@ -922,6 +970,36 @@
         }
       }, 1500);
     }
+
+    // Se a partida não terminou, dar 5 SEGUNDOS para o jogador ver o quadro antes de transitar!
+    if (!data.allSunk) {
+      setTimeout(() => {
+        if (isShooter) {
+          // O jogador disparou: fica 5 segundos a observar o impacto no Radar de Ataque
+          startTransitionCountdown(5, 'defense', '🎯 Salva concluída! A mudar para a Defesa em', () => {
+            state.isMyTurn = false;
+            const oppLabel = state.isSinglePlayer ? 'Computador' : 'Adversário';
+            elements.turnStatusText.textContent = `⏳ VEZ DO OPONENTE: A aguardar pelos 3 tiros do ${oppLabel}...`;
+            elements.turnStatusText.className = 'turn-status-text enemy-turn';
+            elements.battleWaitingAlert.classList.remove('hidden');
+            audio.startSonar();
+            updateSalvoIndicators();
+          });
+        } else {
+          // O oponente disparou: o jogador fica 5 segundos na Defesa a inspecionar os danos nos seus barcos
+          startTransitionCountdown(5, 'attack', '⚠️ Salva inimiga concluída! A tua vez em', () => {
+            state.isMyTurn = true;
+            state.shotsToFire = [];
+            audio.stopSonar();
+            elements.turnStatusText.textContent = '⚡ A TUA VEZ: Seleciona 3 coordenadas no Radar de Ataque!';
+            elements.turnStatusText.className = 'turn-status-text your-turn';
+            elements.battleWaitingAlert.classList.add('hidden');
+            updateSalvoIndicators();
+            startTurnTimer();
+          });
+        }
+      }, 1800);
+    }
   });
 
   function coordToHuman(coordKey) {
@@ -931,6 +1009,7 @@
 
   // Fim de Jogo
   socket.on('game_over', (data) => {
+    clearTransitionCountdown();
     stopTurnTimer();
     audio.stopSonar();
     setTimeout(() => {
@@ -1067,6 +1146,7 @@
   });
 
   elements.btnReturnLobby.addEventListener('click', () => {
+    clearTransitionCountdown();
     audio.click();
     audio.stopSonar();
     stopTurnTimer();
